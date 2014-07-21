@@ -59,7 +59,7 @@
 #include "align.h"
 
 static char *Usage[] =
-    { "[-carUFM] [-i<int(4)>] [-w<int(100)>] [-b<int(10)>] ",
+    { "[-carmUFM] [-i<int(4)>] [-w<int(100)>] [-b<int(10)>] ",
       "    <src1:db|dam> [ <src2:db|dam> ] <align:las> [ <reads:FILE> | <reads:range> ... ]"
     };
 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
   int     reps, *pts;
   int     input_pts;
 
-  int     ALIGN, CARTOON, REFERENCE, FLIP;
+  int     ALIGN, M4, CARTOON, REFERENCE, FLIP;
   int     INDENT, WIDTH, BORDER, UPPERCASE;
   int     ISTWO;
   int     MAP;
@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
       if (argv[i][0] == '-')
         switch (argv[i][1])
         { default:
-            ARG_FLAGS("carUFM")
+            ARG_FLAGS("carmUFM")
             break;
           case 'i':
             ARG_NON_NEGATIVE(INDENT,"Indent")
@@ -124,6 +124,7 @@ int main(int argc, char *argv[])
     UPPERCASE = flags['U'];
     ALIGN     = flags['a'];
     REFERENCE = flags['r'];
+    M4        = flags['m'];
     CARTOON   = flags['c'];
     FLIP      = flags['F'];
     MAP       = flags['M'];
@@ -451,6 +452,29 @@ int main(int argc, char *argv[])
         aln->flags = ovl->flags;
         tps        = ovl->path.tlen/2;
 
+        if (M4) {
+            int64 bbpos, bepos;
+            double acc;
+
+            tps = ((ovl->path.aepos-1)/tspace - ovl->path.abpos/tspace);
+
+
+            if (ovl->flags == 1) {
+                bbpos = (int64) ovl->blen - (int64) ovl->path.bepos;
+                bepos = (int64) ovl->blen - (int64) ovl->path.bbpos;
+            } else {
+                bbpos = (int64) ovl->path.bepos;
+                bepos = (int64) ovl->path.bbpos;
+
+            }
+
+            acc = 100-(200. * ovl->path.diffs)/( ovl->path.aepos - ovl->path.abpos + ovl->path.bepos - ovl->path.bbpos);
+            printf("%lld %lld 0 %5.2f ", (int64) ovl->aread+1, (int64) ovl->bread+1, acc);
+            printf("0 %lld %lld %lld ", (int64) ovl->path.abpos, (int64) ovl->path.aepos, (int64) ovl->alen);
+            printf("%d %lld %lld %lld %lld\n", ovl->flags, bbpos, bepos, (int64) ovl->blen, (int64) tps);
+
+        }
+        else // !M4
         if (MAP)
           { while (ovl->bread != blast)
               { if (!match && seen && !(lhalf && rhalf))
@@ -475,6 +499,7 @@ int main(int argc, char *argv[])
             
         if (ALIGN || CARTOON || REFERENCE)
           printf("\n");
+        if (!M4) {
         if (FLIP)
           { Flip_Alignment(aln,0);
             Print_Number((int64) ovl->bread+1,ar_wide+1,stdout);
@@ -499,6 +524,7 @@ int main(int argc, char *argv[])
         printf("..");
         Print_Number((int64) ovl->path.bepos,bi_wide,stdout);
         printf("]");
+        }
 
         if (ALIGN || CARTOON || REFERENCE)
           { if (ALIGN || REFERENCE)
@@ -569,7 +595,7 @@ int main(int argc, char *argv[])
             if (ALIGN)
               Print_Alignment(stdout,aln,work,INDENT,WIDTH,BORDER,UPPERCASE,mx_wide);
           }
-        else
+        else if (!M4)
           { printf(" :   < ");
             Print_Number((int64) ovl->path.diffs,mn_wide,stdout);
             printf(" diffs  (");
