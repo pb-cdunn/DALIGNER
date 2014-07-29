@@ -1,8 +1,9 @@
 CFLAGS = -O3 -Wall -Wextra -fno-strict-aliasing
 
-ALL = daligner HPCdaligner HPCmapper LAsort LAmerge LAsplit LAcat LAshow LAcheck
+ALL = daligner HPCdaligner HPCmapper LAsort LAmerge LAsplit LAcat LAshow LAcheck \
+	  DB.so
 
-all: $(ALL) DBLib
+all: $(ALL)
 
 daligner: daligner.c filter.c filter.h align.c align.h DB.c DB.h QV.c QV.h
 	gcc $(CFLAGS) -o daligner daligner.c filter.c align.c DB.c QV.c -lpthread -lm
@@ -34,11 +35,11 @@ LAcheck: LAcheck.c align.c align.h DB.c DB.h QV.c QV.h
 LAupgrade.Dec.31.2014: LAupgrade.Dec.31.2014.c align.c align.h DB.c DB.h QV.c QV.h
 	gcc $(CFLAGS) -o LAupgrade.Dec.31.2014 LAupgrade.Dec.31.2014.c align.c DB.c QV.c -lm
 
-DBLib: DB.c DB.h
+DB.so: DB.c DB.h
 	gcc $(CFLAGS) -shared -fPIC -o DB.so DB.c DB.h -lm
 
 clean:
-	rm -f $(ALL) DB.o
+	rm -f $(ALL)
 	rm -fr *.dSYM
 	rm -f LAupgrade.Dec.31.2014
 	rm -f daligner.tar.gz
