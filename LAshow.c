@@ -460,8 +460,8 @@ int main(int argc, char *argv[])
 
 
             if (ovl->flags == 1) {
-                bbpos = (int64) ovl->blen - (int64) ovl->path.bepos;
-                bepos = (int64) ovl->blen - (int64) ovl->path.bbpos;
+                bbpos = (int64) aln->blen - (int64) ovl->path.bepos;
+                bepos = (int64) aln->blen - (int64) ovl->path.bbpos;
             } else {
                 bbpos = (int64) ovl->path.bepos;
                 bepos = (int64) ovl->path.bbpos;
@@ -470,8 +470,8 @@ int main(int argc, char *argv[])
 
             acc = 100-(200. * ovl->path.diffs)/( ovl->path.aepos - ovl->path.abpos + ovl->path.bepos - ovl->path.bbpos);
             printf("%lld %lld 0 %5.2f ", (int64) ovl->aread+1, (int64) ovl->bread+1, acc);
-            printf("0 %lld %lld %lld ", (int64) ovl->path.abpos, (int64) ovl->path.aepos, (int64) ovl->alen);
-            printf("%d %lld %lld %lld %lld\n", ovl->flags, bbpos, bepos, (int64) ovl->blen, (int64) tps);
+            printf("0 %lld %lld %lld ", (int64) ovl->path.abpos, (int64) ovl->path.aepos, (int64) aln->alen);
+            printf("%d %lld %lld %lld %lld\n", ovl->flags, bbpos, bepos, (int64) aln->blen, (int64) tps);
 
         }
         else // !M4
