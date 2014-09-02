@@ -1,12 +1,15 @@
 CFLAGS = -O3 -Wall -Wextra -fno-strict-aliasing
 
-ALL = daligner HPCdaligner HPCmapper LAsort LAmerge LAsplit LAcat LAshow LAcheck \
-	  DB.so
+ALL = daligner HPCdaligner HPCmapper LAsort LAmerge LAsplit LAcat LAshow LAcheck
+ALL:= DB.so daligner_p ${ALL}
 
 all: $(ALL)
 
 daligner: daligner.c filter.c filter.h align.c align.h DB.c DB.h QV.c QV.h
 	gcc $(CFLAGS) -o daligner daligner.c filter.c align.c DB.c QV.c -lpthread -lm
+
+daligner_p: daligner.c filter_p.c filter.h align.c align.h DB.c DB.h QV.c QV.h
+	gcc $(CFLAGS) -o daligner_p daligner.c filter_p.c align.c DB.c QV.c -lpthread -lm
 
 HPCdaligner: HPCdaligner.c DB.c DB.h QV.c QV.h
 	gcc $(CFLAGS) -o HPCdaligner HPCdaligner.c DB.c QV.c -lm
@@ -35,8 +38,8 @@ LAcheck: LAcheck.c align.c align.h DB.c DB.h QV.c QV.h
 LAupgrade.Dec.31.2014: LAupgrade.Dec.31.2014.c align.c align.h DB.c DB.h QV.c QV.h
 	gcc $(CFLAGS) -o LAupgrade.Dec.31.2014 LAupgrade.Dec.31.2014.c align.c DB.c QV.c -lm
 
-DB.so: DB.c DB.h
-	gcc $(CFLAGS) -shared -fPIC -o DB.so DB.c DB.h -lm
+DB.so: DB.c DB.h QV.c QV.h
+	gcc $(CFLAGS) -shared -fPIC -o DB.so DB.c DB.h QV.c -lm
 
 clean:
 	rm -f $(ALL)
