@@ -25,9 +25,9 @@ for aread in ovl_data:
     print "%08d" % aread, aseq
     for aln_data in ovl_data[aread]:
         aread, bread, acc, abpos, aepos, alen, comp, bbpos, bepos, blen = aln_data
-
+        
         LAPI.load_read(db, bread, aln.bseq, 2)
-
+        
         bseq = cast(aln.bseq, c_char_p)
         bseq = bseq.value
         bseq = bseq[bbpos:bepos]

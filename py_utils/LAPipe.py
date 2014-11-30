@@ -1,4 +1,4 @@
-from pypeflow.common import *
+from pypeflow.common import * 
 from pypeflow.data import PypeLocalFile, makePypeLocalFile, fn
 from pypeflow.task import PypeTask, PypeThreadTaskBase, PypeTaskBase
 from pypeflow.controller import PypeWorkflow, PypeThreadWorkflow
@@ -15,9 +15,9 @@ def run_script(job_data, job_type = "SGE" ):
         sge_option = job_data["sge_option"]
         script_fn = job_data["script_fn"]
         sge_cmd="qsub -N {job_name} {sge_option} -o {cwd}/sge_log -j y\
-                 -S /bin/bash {script}".format(job_name=job_name,
-                                               cwd=os.getcwd(),
-                                               sge_option=sge_option,
+                 -S /bin/bash {script}".format(job_name=job_name,  
+                                               cwd=os.getcwd(), 
+                                               sge_option=sge_option, 
                                                script=script_fn)
 
         #print sge_cmd
@@ -33,7 +33,7 @@ def wait_for_file(filename, task = None, job_name = ""):
             break
 
         if task != None:
-            if task.shutdown_event != None and task.shutdown_event.is_set():
+            if task.shutdown_event != None and task.shutdown_event.is_set(): 
                 os.system("qdel %s" % job_name)
                 break
 
@@ -145,11 +145,11 @@ if __name__ == "__main__":
             print >> p_script, """for f in `find .. -wholename "*job*/%s.%d.%s.*.*.las"`; do ln -sf $f .; done""" % (prefix, p_id, prefix)
             for l in s_data:
                 print >> p_script, l
-                print >> p_script, "mv %s.%d.las ../las_files" % (prefix, p_id)
-
+                print >> p_script, "mv %s.%d.las ../las_files" % (prefix, p_id) 
+            
         p_file = os.path.abspath( "./p_%05d/p_%05d.sh" % (p_id, p_id) )
         job_done = makePypeLocalFile(os.path.abspath( "./p_%05d/p_%05d_done" % (p_id,p_id)  ))
-        parameters =  {"p_file": p_file,
+        parameters =  {"p_file": p_file, 
                        "cwd": os.path.join(os.getcwd(), "p_%05d" % p_id),
                        "job_id": p_id}
         make_p_task = PypeTask( inputs = {"db_file": db_file},
@@ -170,8 +170,8 @@ if __name__ == "__main__":
                                 parameters = parameters,
                                 TaskType = PypeThreadTaskBase,
                                 URL = "task://localhost/ct_%05d" % p_id )
-
+        
         c_task = make_c_task( run_consensus_task )
         wf.addTask(c_task)
         print p_id
-    wf.refreshTargets(updateFreq = 15) #all
+    wf.refreshTargets(updateFreq = 15) #all            

@@ -1,7 +1,6 @@
 CFLAGS = -O3 -Wall -Wextra -fno-strict-aliasing
 
-ALL = daligner HPCdaligner HPCmapper LAsort LAmerge LAsplit LAcat LAshow LAcheck
-ALL:= DB.so daligner_p ${ALL}
+ALL = daligner daligner_p HPCdaligner HPCmapper LAsort LAmerge LAsplit LAcat LAshow LAcheck LA4Falcon DB2Falcon DB.so
 
 all: $(ALL)
 
@@ -26,6 +25,9 @@ LAmerge: LAmerge.c align.h DB.c DB.h QV.c QV.h
 LAshow: LAshow.c align.c align.h DB.c DB.h QV.c QV.h
 	gcc $(CFLAGS) -o LAshow LAshow.c align.c DB.c QV.c -lm
 
+LA4Falcon: LA4Falcon.c align.c align.h DB.c DB.h QV.c QV.h
+	gcc $(CFLAGS) -o LA4Falcon LA4Falcon.c align.c DB.c QV.c -lm
+
 LAcat: LAcat.c align.h DB.c DB.h QV.c QV.h
 	gcc $(CFLAGS) -o LAcat LAcat.c DB.c QV.c -lm
 
@@ -35,17 +37,21 @@ LAsplit: LAsplit.c align.h DB.c DB.h QV.c QV.h
 LAcheck: LAcheck.c align.c align.h DB.c DB.h QV.c QV.h
 	gcc $(CFLAGS) -o LAcheck LAcheck.c align.c DB.c QV.c -lm
 
-LAupgrade.Dec.31.2014: LAupgrade.Dec.31.2014.c align.c align.h DB.c DB.h QV.c QV.h
-	gcc $(CFLAGS) -o LAupgrade.Dec.31.2014 LAupgrade.Dec.31.2014.c align.c DB.c QV.c -lm
+DB2Falcon: DB2Falcon.c DB.c DB.h QV.c QV.h
+	gcc $(CFLAGS) -o DB2Falcon DB2Falcon.c DB.c QV.c -lm
 
 DB.so: DB.c DB.h QV.c QV.h
 	gcc $(CFLAGS) -shared -fPIC -o DB.so DB.c DB.h QV.c -lm
 
+
 clean:
 	rm -f $(ALL)
-	rm -fr *.dSYM
 	rm -f LAupgrade.Dec.31.2014
 	rm -f daligner.tar.gz
+
+LAupgrade.Dec.31.2014: LAupgrade.Dec.31.2014.c align.c align.h DB.c DB.h QV.c QV.h
+	gcc $(CFLAGS) -o LAupgrade.Dec.31.2014 LAupgrade.Dec.31.2014.c align.c DB.c QV.c -lm
+
 
 install:
 	cp $(ALL) ~/bin
@@ -53,3 +59,4 @@ install:
 package:
 	make clean
 	tar -zcf daligner.tar.gz README *.h *.c Makefile
+

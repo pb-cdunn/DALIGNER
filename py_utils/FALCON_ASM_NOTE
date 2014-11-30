@@ -25,3 +25,4 @@ cd falcon_asm
 falcon_overlap.py --d_core 3 --n_core 24 --min_len 8000 preads.fa > preads.ovl
 falcon_asm.py preads.ovl preads.fa
 falcon_fixasm.py
+

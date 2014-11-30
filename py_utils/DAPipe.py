@@ -1,4 +1,4 @@
-from pypeflow.common import *
+from pypeflow.common import * 
 from pypeflow.data import PypeLocalFile, makePypeLocalFile, fn
 from pypeflow.task import PypeTask, PypeThreadTaskBase, PypeTaskBase
 from pypeflow.controller import PypeWorkflow, PypeThreadWorkflow
@@ -14,9 +14,9 @@ def run_script(job_data, job_type = "SGE" ):
         sge_option = job_data["sge_option"]
         script_fn = job_data["script_fn"]
         sge_cmd="qsub -N {job_name} {sge_option} -o {cwd}/sge_log -j y\
-                 -S /bin/bash {script}".format(job_name=job_name,
-                                               cwd=os.getcwd(),
-                                               sge_option=sge_option,
+                 -S /bin/bash {script}".format(job_name=job_name,  
+                                               cwd=os.getcwd(), 
+                                               sge_option=sge_option, 
                                                script=script_fn)
 
         #print sge_cmd
@@ -32,7 +32,7 @@ def wait_for_file(filename, task = None, job_name = ""):
             break
 
         if task != None:
-            if task.shutdown_event != None and task.shutdown_event.is_set():
+            if task.shutdown_event != None and task.shutdown_event.is_set(): 
                 os.system("qdel %s" % job_name)
                 break
 
@@ -90,4 +90,4 @@ if __name__ == "__main__":
                 wf.addTask(daligner_task)
                 job_id += 1
                 print job_id
-    wf.refreshTargets(updateFreq = 45) #all
+    wf.refreshTargets(updateFreq = 45) #all            

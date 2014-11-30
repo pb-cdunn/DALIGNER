@@ -89,7 +89,7 @@ def get_ovl_data(fn):
 
         ovl.path.trace = trace
         _read_trace(in_f, ovl, tbytes)
-
+        
         if ovl.alen < 8000:
             continue
         if ovl.path.abpos > 50 and ovl.path.bbpos > 50:
@@ -103,7 +103,7 @@ def get_ovl_data(fn):
         acc = 100 - (200.0 * ovl.path.diffs / ( ovl.path.aepos - ovl.path.abpos + ovl.path.aepos - ovl.path.abpos ))
 
         ovl_data.setdefault(ovl.aread,[])
-
+        
         ovl_data[ovl.aread].append( (ovl.aread, ovl.bread, acc, ovl.path.abpos,  ovl.path.aepos, ovl.alen, comp, bbpos, bepos, ovl.blen) )
     fclose(in_f)
 
