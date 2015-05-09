@@ -58,7 +58,7 @@
 #include "filter.h"
 
 //#define DATA_PATH "/lustre/hpcprod/cdunn/data/ecoli"
-#define DATA_PATH "/lustre/hpcprod/cdunn/repo/arab2"
+#define DATA_PATH "/lustre/hpcprod/cdunn/repo/arab2_test"
 #define DALIGNER_DIR "/lustre/hpcprod/cdunn/repo/gh/DALIGNER"
 
 #undef  LSF  //  define if want a directly executable LSF script
