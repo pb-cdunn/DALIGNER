@@ -1294,6 +1294,18 @@ static void *report_thread(void *arg)
                     apath = Local_Alignment(align,work,aspec,bpos,bpos,apos);
                     lasta = bpath->bepos;
                     lastd = lasta - bpath->aepos;
+
+#ifdef FALCON_DALIGNER_P
+                    if (apath->abpos > 24 && apath->bbpos > 24)
+                      continue;
+
+                    if (alen - apath->aepos > 24 && blen - apath->bepos > 24)
+                      continue;
+
+                    if (alen < 500 || blen < 500)
+                      continue;
+#endif  // FALCON_DALIGNER_P
+
                     if ((apath->aepos - apath->abpos) + (apath->bepos - apath->bbpos) >= MINOVER)
                       { ovla->path = *apath;
                         if (small)
