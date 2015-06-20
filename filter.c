@@ -891,6 +891,7 @@ static int find_tuple(uint64 x, KmerPos *a, int n)
 static KmerPos  *MG_alist;
 static KmerPos  *MG_blist;
 static SeedPair *MG_hits;
+static long int  MG_hits_size;
 static int       MG_self;
 
 typedef struct
@@ -1652,6 +1653,7 @@ void Match_Filter(char *aname, HITS_DB *ablock, char *bname, HITS_DB *bblock,
         hhit  = work1 = (SeedPair *) bsort;
       }
     khit = work2 = (SeedPair *) Malloc(sizeof(SeedPair)*(nhits+1),"Allocating dazzler hit vectors");
+    MG_hits_size = nhits + 1;
     if (hhit == NULL || khit == NULL || bsort == NULL)
       exit (1);
 
