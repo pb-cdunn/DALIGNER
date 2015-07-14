@@ -59,7 +59,7 @@
 
 //#define DATA_PATH "/lustre/hpcprod/cdunn/data/ecoli"
 #define DATA_PATH "/lustre/hpcprod/cdunn/repo/arab2_test"
-#define DALIGNER_DIR "/lustre/hpcprod/cdunn/repo/gh/DALIGNER"
+//#define "lustre/hpcprod/cdunn/repo/gh/DALIGNER"
 
 #undef  LSF  //  define if want a directly executable LSF script
 
@@ -337,7 +337,7 @@ int main(int argc, char *argv[])
             printf(LSF_ALIGN,jobid++);
             printf(" \"");
 #endif
-            printf("/usr/bin/time -v " DALIGNER_DIR "/daligner");
+            printf("/usr/bin/time -v " "daligner");
             if (VON)
               printf(" -v");
             if (BON)
@@ -410,7 +410,7 @@ int main(int argc, char *argv[])
           printf(LSF_MERGE,jobid++);
           printf(" \"");
 #endif
-          printf("/usr/bin/time -v " DALIGNER_DIR "/LAsort");
+          printf("/usr/bin/time -v " "LAsort");
           if (VON)
             printf(" -v");
           for (k = 0; k < NTHREADS; k++)
@@ -422,7 +422,7 @@ int main(int argc, char *argv[])
               { printf(" %s/%s.%s.C%d",DATA_PATH,root,root,k);
                 printf(" %s/%s.%s.N%d",DATA_PATH,root,root,k);
               }
-          printf(" && /usr/bin/time -v " DALIGNER_DIR "/LAmerge");
+          printf(" && /usr/bin/time -v " "LAmerge");
           if (VON)
             printf(" -v");
           if (lblock == 1)
@@ -512,7 +512,7 @@ int main(int argc, char *argv[])
                               printf(" \"");
                             }
 #endif
-                          printf("/usr/bin/time -v " DALIGNER_DIR "/LAmerge");
+                          printf("/usr/bin/time -v " "LAmerge");
                           if (VON)
                             printf(" -v");
                           if (last)
@@ -552,7 +552,7 @@ int main(int argc, char *argv[])
                       printf(LSF_MERGE,jobid++);
                       printf(" \"");
 #endif
-                      printf("/usr/bin/time -v " DALIGNER_DIR "/LAmerge");
+                      printf("/usr/bin/time -v " "LAmerge");
                       if (VON)
                         printf(" -v");
                       if (i == level)
