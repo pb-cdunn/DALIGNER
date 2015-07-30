@@ -210,10 +210,12 @@ static void *lex_thread(void *arg)
   int64       i, n, x;
   uint64      c, b;
 
-  printf("\n ----");
   n = data->end;
-  printf("\n shift=%d, LEX_last=%d, n=%d", shift, LEX_last, n);
-  fflush(stdout);
+  if (VERBOSE)
+    { printf("\n ----");
+      printf("\n shift=%d, LEX_last=%d, n=%d", shift, LEX_last, n);
+      fflush(stdout);
+    }
   if (shift >= 64)
     { shift -= 64;
       if (LEX_last)
@@ -274,8 +276,10 @@ static void *lex_thread(void *arg)
         for (i = data->beg; i < n; i++)
           { c = src[i].p1;
             x = tptr[c&BMASK]++;
-            printf("\n @=%p+%d i=%6d,c&=%3d,x=%3d,c=%d ", (void*)trg, (sizeof(Double)*x), i, (c&BMASK), x, c);
-            fflush(stdout);
+            if (VERBOSE) 
+            { printf("\n @=%p+%d i=%6d,c&=%3d,x=%3d,c=%d ", (void*)trg, (sizeof(Double)*x), i, (c&BMASK), x, c);
+              fflush(stdout);
+            }
             trg[x] = src[i];
             sptr[((c >> qshift) & QMASK) + x/zsize] += 1;
           }
@@ -288,8 +292,10 @@ static void *lex_thread(void *arg)
             sptr[((b >> qshift) & QMASK) + x/zsize] += 1;
           }
 
-  printf("\n Finished @%p n=%d", (void*)trg, n);
-  fflush(stdout);
+  if (VERBOSE)
+    { printf("\n Finished @%p n=%d", (void*)trg, n);
+      fflush(stdout);
+    }
   return (NULL);
 }
 
