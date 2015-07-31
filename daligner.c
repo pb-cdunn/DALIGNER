@@ -394,11 +394,6 @@ static HITS_DB *read_DB(char *name, char **mask, int *mstat, int mtop, int kmer,
 
   Trim_DB(&block);
 
-  if (block.totlen > 0x7fffffffll)
-    { fprintf(stderr,"File (%s) is too large (%ld)\n",name,block.totlen);
-      exit (1);
-    }
-
   stop = 0;
   for (i = 0; i < mtop; i++)
     { HITS_TRACK *track;
@@ -663,6 +658,7 @@ int main(int argc, char *argv[])
 
   { int i, j;
 
+    broot = NULL;
     for (i = 2; i < argc; i++)
       { bfile = argv[i];
         if (strcmp(afile,bfile) != 0)
@@ -700,7 +696,6 @@ int main(int argc, char *argv[])
             Close_DB(&bblock);
             free(broot);
           }
-        //free(broot);
       }
   }
 

@@ -57,10 +57,6 @@
 #include "DB.h"
 #include "filter.h"
 
-//#define DATA_PATH "/lustre/hpcprod/cdunn/data/ecoli"
-#define DATA_PATH "/lustre/hpcprod/cdunn/repo/arab2_test"
-//#define "lustre/hpcprod/cdunn/repo/gh/DALIGNER"
-
 #undef  LSF  //  define if want a directly executable LSF script
 
 static char *Usage[] =
@@ -320,7 +316,7 @@ int main(int argc, char *argv[])
     for (i = fblock; i <= lblock; i++)
       njobs += (i-1)/DUNIT+1;
 
-    // printf("# Daligner jobs (%d)\n",njobs);
+    printf("# Daligner jobs (%d)\n",njobs);
 
 #ifdef LSF
     jobid = 1;
@@ -337,7 +333,7 @@ int main(int argc, char *argv[])
             printf(LSF_ALIGN,jobid++);
             printf(" \"");
 #endif
-            printf("/usr/bin/time -v " "daligner");
+            printf("daligner");
             if (VON)
               printf(" -v");
             if (BON)
@@ -370,24 +366,24 @@ int main(int argc, char *argv[])
               if (usepath)
                 printf(" %s/%s.%d",pwd,root,i);
               else
-                printf(" %s/%s.%d",DATA_PATH,root,i);
+                printf(" %s.%d",root,i);
             else
               if (usepath)
                 printf(" %s/%s",pwd,root);
               else
-                printf(" %s/%s",DATA_PATH,root);
+                printf(" %s",root);
             hgh = (i*j)/bits + 1;
             for (k = low; k < hgh; k++)
               if (useblock)
                 if (usepath)
                   printf(" %s/%s.%d",pwd,root,k);
                 else
-                  printf(" %s/%s.%d",DATA_PATH,root,k);
+                  printf(" %s.%d",root,k);
               else
                 if (usepath)
                   printf(" %s/%s",pwd,root);
                 else
-                  printf(" %s/%s",DATA_PATH,root);
+                  printf(" %s",root);
 #ifdef LSF
             printf("\"");
 #endif
@@ -398,7 +394,7 @@ int main(int argc, char *argv[])
 
     //  ... and then all the initial sort & merge jobs for each block pair
 
-    // printf("# Initial sort jobs (%d)\n", lblock*lblock - (fblock-1)*(fblock-1) );
+    printf("# Initial sort jobs (%d)\n", lblock*lblock - (fblock-1)*(fblock-1) );
 
 #ifdef LSF
     jobid = 1;
@@ -410,45 +406,45 @@ int main(int argc, char *argv[])
           printf(LSF_MERGE,jobid++);
           printf(" \"");
 #endif
-          printf("/usr/bin/time -v " "LAsort");
+          printf("LAsort");
           if (VON)
             printf(" -v");
           for (k = 0; k < NTHREADS; k++)
             if (useblock)
-              { printf(" %s/%s.%d.%s.%d.C%d",DATA_PATH,root,i,root,j,k);
-                printf(" %s/%s.%d.%s.%d.N%d",DATA_PATH,root,i,root,j,k);
+              { printf(" %s.%d.%s.%d.C%d",root,i,root,j,k);
+                printf(" %s.%d.%s.%d.N%d",root,i,root,j,k);
               }
             else
-              { printf(" %s/%s.%s.C%d",DATA_PATH,root,root,k);
-                printf(" %s/%s.%s.N%d",DATA_PATH,root,root,k);
+              { printf(" %s.%s.C%d",root,root,k);
+                printf(" %s.%s.N%d",root,root,k);
               }
-          printf(" && /usr/bin/time -v " "LAmerge");
+          printf(" && LAmerge");
           if (VON)
             printf(" -v");
           if (lblock == 1)
-            printf(" %s/%s.%d",DATA_PATH,root,i);
+            printf(" %s.%d",root,i);
           else if (i < fblock)
-            printf(" %s/L1.%d.%d",DATA_PATH,i,(j-fblock)+1);
+            printf(" L1.%d.%d",i,(j-fblock)+1);
           else
-            printf(" %s/L1.%d.%d",DATA_PATH,i,j);
+            printf(" L1.%d.%d",i,j);
           for (k = 0; k < NTHREADS; k++)
             if (useblock)
-              { printf(" %s/%s.%d.%s.%d.C%d.S",DATA_PATH,root,i,root,j,k);
-                printf(" %s/%s.%d.%s.%d.N%d.S",DATA_PATH,root,i,root,j,k);
+              { printf(" %s.%d.%s.%d.C%d.S",root,i,root,j,k);
+                printf(" %s.%d.%s.%d.N%d.S",root,i,root,j,k);
               }
             else
-              { printf(" %s/%s.%s.C%d.S",DATA_PATH,root,root,k);
-                printf(" %s/%s.%s.N%d.S",DATA_PATH,root,root,k);
+              { printf(" %s.%s.C%d.S",root,root,k);
+                printf(" %s.%s.N%d.S",root,root,k);
               }
           printf(" && rm");
           for (k = 0; k < NTHREADS; k++)
             if (useblock)
-              { printf(" %s/%s.%d.%s.%d.C%d.S.las",DATA_PATH,root,i,root,j,k);
-                printf(" %s/%s.%d.%s.%d.N%d.S.las",DATA_PATH,root,i,root,j,k);
+              { printf(" %s.%d.%s.%d.C%d.S.las",root,i,root,j,k);
+                printf(" %s.%d.%s.%d.N%d.S.las",root,i,root,j,k);
               }
             else
-              { printf(" %s/%s.%s.C%d.S.las",DATA_PATH,root,root,k);
-                printf(" %s/%s.%s.N%d.S.las",DATA_PATH,root,root,k);
+              { printf(" %s.%s.C%d.S.las",root,root,k);
+                printf(" %s.%s.N%d.S.las",root,root,k);
               }
 #ifdef LSF
           printf("\"");
@@ -494,7 +490,7 @@ int main(int argc, char *argv[])
                 { int last;
 
                   last = (dnt == 1 || i == level);
-                  // printf("# Level %d jobs (%d)\n",i,bits*((lblock-fblock)+1) + dits*(fblock-1));
+                  printf("# Level %d jobs (%d)\n",i,bits*((lblock-fblock)+1) + dits*(fblock-1));
                   for (j = 1; j < fblock; j++)
                     {
 #ifdef LSF
@@ -502,7 +498,7 @@ int main(int argc, char *argv[])
                       printf(" \"");
 #endif
                       if (last)
-                        printf("mv %s/%s.%d.las %s/L%d.%d.0.las && ",DATA_PATH,root,j,DATA_PATH,i,j);
+                        printf("mv %s.%d.las L%d.%d.0.las && ",root,j,i,j);
                       low = 1;
                       for (p = 1; p <= dits; p++)
                         { hgh = (dnt*p)/dits;
@@ -512,20 +508,20 @@ int main(int argc, char *argv[])
                               printf(" \"");
                             }
 #endif
-                          printf("/usr/bin/time -v " "LAmerge");
+                          printf("LAmerge");
                           if (VON)
                             printf(" -v");
                           if (last)
-                            printf(" %s/%s.%d L%d.%d.0",DATA_PATH,root,j,i,j);
+                            printf(" %s.%d L%d.%d.0",root,j,i,j);
                           else
-                            printf(" %s/L%d.%d.%d",DATA_PATH,i+1,j,p);
+                            printf(" L%d.%d.%d",i+1,j,p);
                           for (k = low; k <= hgh; k++)
-                            printf(" %s/L%d.%d.%d",DATA_PATH,i,j,k);
+                            printf(" L%d.%d.%d",i,j,k);
                           printf(" && rm");
                           if (last)
-                            printf(" %s/L%d.%d.0.las",DATA_PATH,i,j);
+                            printf(" L%d.%d.0.las",i,j);
                           for (k = low; k <= hgh; k++)
-                            printf(" %s/L%d.%d.%d.las",DATA_PATH,i,j,k);
+                            printf(" L%d.%d.%d.las",i,j,k);
 #ifdef LSF
                           printf("\"");
 #endif
@@ -539,8 +535,7 @@ int main(int argc, char *argv[])
                     dnt = 0;
                 }
               else
-
-                fprintf(stderr, "# Level %d jobs (%d)\n",i,bits*((lblock-fblock)+1));
+                printf("# Level %d jobs (%d)\n",i,bits*((lblock-fblock)+1));
 
               //  New block merges
 
@@ -552,18 +547,18 @@ int main(int argc, char *argv[])
                       printf(LSF_MERGE,jobid++);
                       printf(" \"");
 #endif
-                      printf("/usr/bin/time -v " "LAmerge");
+                      printf("LAmerge");
                       if (VON)
                         printf(" -v");
                       if (i == level)
-                        printf(" %s/%s.%d",DATA_PATH,root,j);
+                        printf(" %s.%d",root,j);
                       else
-                        printf(" %s/L%d.%d.%d",DATA_PATH,i+1,j,p);
+                        printf(" L%d.%d.%d",i+1,j,p);
                       for (k = low; k <= hgh; k++)
-                        printf(" %s/L%d.%d.%d",DATA_PATH,i,j,k);
+                        printf(" L%d.%d.%d",i,j,k);
                       printf(" && rm");
                       for (k = low; k <= hgh; k++)
-                        printf(" %s/L%d.%d.%d.las",DATA_PATH,i,j,k);
+                        printf(" L%d.%d.%d.las",i,j,k);
 #ifdef LSF
                       printf("\"");
 #endif
