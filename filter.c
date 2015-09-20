@@ -91,7 +91,7 @@
 #ifdef TEST_GATHER
 #define NOTHREAD
 #endif
-
+pthread_mutex_t lock;
 typedef struct
   { uint64 p1;   //  The lower half
     uint64 p2;
@@ -211,7 +211,7 @@ static void *lex_thread(void *arg)
   Double     *trg   = LEX_trg;
   int64       i, n, x;
   uint64      c, b;
-
+pthread_mutex_lock(&lock);
   n = data->end;
   if (VERY_VERBOSE)
     { printf("\n ----");
@@ -293,7 +293,7 @@ static void *lex_thread(void *arg)
             trg[x] = src[i];
             sptr[((b >> qshift) & QMASK) + x/zsize] += 1;
           }
-
+pthread_mutex_unlock(&lock);
   if (VERY_VERBOSE)
     { printf("\n Finished @%p n=%lld", (void*)trg, n);
       fflush(stdout);
@@ -698,7 +698,7 @@ static KmerPos *sort_kmers(HITS_DB *block, int *len)
   Comp_Arg  parmf[NTHREADS];
   Lex_Arg   parmx[NTHREADS];
   int       mersort[16];
-
+pthread_mutex_init(&lock, NULL);
   KmerPos  *src, *trg, *rez;
   int       kmers, nreads;
   int       i, j, x, z;
@@ -884,10 +884,12 @@ static KmerPos *sort_kmers(HITS_DB *block, int *len)
     }
 
   *len = kmers;
+pthread_mutex_destroy(&lock);
   return (rez);
 
 no_mers:
   *len = 0;
+pthread_mutex_destroy(&lock);
   return (NULL);
 }
 
