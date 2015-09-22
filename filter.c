@@ -58,10 +58,11 @@
 #include <math.h>
 #include <pthread.h>
 
-#include "DB.h"
 #include "filter.h"
+#include "DB.h"
 #include "align.h"
-
+#include <assert.h>
+static int kmers = 0;
 #define THREAD    pthread_t
 
 #define MAX_BIAS  2    //  In -b mode, don't consider tuples with specificity
@@ -198,7 +199,7 @@ typedef struct
     int64  sptr[NTHREADS*BPOWR];
   } Lex_Arg;
 
-#define VERY_VERBOSE 0
+#define VERY_VERBOSE 1
 
 static void *lex_thread(void *arg)
 { Lex_Arg    *data  = (Lex_Arg *) arg;
@@ -226,6 +227,7 @@ static void *lex_thread(void *arg)
             b = (c >> shift);
             x = tptr[b&BMASK]++;
             trg[x] = src[i];
+            assert(i < data->end); assert((b&BMASK)<BPOWR);
           }
       else
         for (i = data->beg; i < n; i++)
@@ -234,6 +236,8 @@ static void *lex_thread(void *arg)
             x = tptr[b&BMASK]++;
             trg[x] = src[i];
             sptr[((b >> qshift) & QMASK) + x/zsize] += 1;
+            assert(i < data->end); assert((b&BMASK)<BPOWR);
+            assert((((b >> qshift) & QMASK) + x/zsize)<(NTHREADS*BPOWR));
           }
     }
 
@@ -247,6 +251,8 @@ static void *lex_thread(void *arg)
             x = tptr[b&BMASK]++;
             trg[x] = src[i];
             sptr[((src[i].p2 << NSHIFT) & QMASK) + x/zsize] += 1;
+            assert(i < data->end); assert((b&BMASK)<BPOWR);
+            assert((((src[i].p2 << NSHIFT) & QMASK) + x/zsize)<(NTHREADS*BPOWR));
           }
       else
         for (i = data->beg; i < n; i++)
@@ -255,6 +261,8 @@ static void *lex_thread(void *arg)
             x = tptr[b&BMASK]++;
             trg[x] = src[i];
             sptr[((src[i].p2 >> qshift) & QMASK) + x/zsize] += 1;
+            assert(i < data->end); assert((b&BMASK)<BPOWR); assert((i)<(NTHREADS*BPOWR));
+            assert((((src[i].p2 >> qshift) & QMASK) + x/zsize)<(NTHREADS*BPOWR));
           }
     }
 
@@ -264,14 +272,18 @@ static void *lex_thread(void *arg)
         for (i = data->beg; i < n; i++)
           { c = src[i].p1;
             x = tptr[c&BMASK]++;
+            assert(x <= kmers);
             trg[x] = src[i];
+            assert(i < data->end); assert((c&BMASK)<BPOWR);
           }
       else
         for (i = data->beg; i < n; i++)
           { c = src[i].p1;
             b = (c >> shift);
             x = tptr[b&BMASK]++;
+            assert(x <= kmers);
             trg[x] = src[i];
+            assert(i < data->end); assert((b&BMASK)<BPOWR);
           }
     else
       if (shift == 0)
@@ -282,16 +294,30 @@ static void *lex_thread(void *arg)
             { printf("\n @=%p+%lld i=%6lld,c&=%3lld,x=%3lld,c=%lld ", (void*)trg, (sizeof(Double)*x), i, (c&BMASK), x, c);
               fflush(stdout);
             }
+            assert(x <= kmers);
             trg[x] = src[i];
             sptr[((c >> qshift) & QMASK) + x/zsize] += 1;
+            assert(i < data->end); assert((c&BMASK)<BPOWR);
+            assert((((c >> qshift) & QMASK) + x/zsize)<(NTHREADS*BPOWR));
           }
       else
         for (i = data->beg; i < n; i++)
-          { c = src[i].p1;
+          {
+            assert(i < data->end);
+            assert(i <= kmers);
+            c = src[i].p1;
             b = (c >> shift);
+            assert((b&BMASK)<BPOWR);
+            assert((b&BMASK)>=0);
             x = tptr[b&BMASK]++;
+            if (x > kmers) {
+              fprintf(stderr, "x=%lld >kmers=%lld, b=%lld, c=%lld, shift=%d, i=%lld, e-b=%lld, n=%lld\n",
+                  x, kmers, b, c, shift, i, data->end-data->beg, n);
+            }
+            assert(x <= kmers);
             trg[x] = src[i];
             sptr[((b >> qshift) & QMASK) + x/zsize] += 1;
+            assert((((b >> qshift) & QMASK) + x/zsize)<(NTHREADS*BPOWR));
           }
 
   if (VERY_VERBOSE)
@@ -319,6 +345,14 @@ static Double *lex_sort(int bytes[16], Double *src, Double *trg, Lex_Arg *parmx)
     if (bytes[c])
       break;
   fb = c;
+  printf("*** fb=c=%d, len=%lld, LEX_zsize=%lld\n", c, len, LEX_zsize);
+        if (0) { for (i = 0; i < NTHREADS; i++) {
+            for (z = 0; z < NTHREADS*BPOWR; z++)
+              parmx[i].sptr[z] = 0;
+            for (j = 0; j < BPOWR; j++)
+              parmx[i].tptr[j] = 0;
+          }
+        }
   for (b = c; b < 16; b = c)
     { for (c = b+1; c < 16; c++)
         if (bytes[c])
@@ -326,6 +360,7 @@ static Double *lex_sort(int bytes[16], Double *src, Double *trg, Lex_Arg *parmx)
       LEX_last  = (c >= 16);
       LEX_shift = (b << 3);
       LEX_next  = (c << 3);
+  printf("*** c=%d, LEX_last=%lld, LEX_shift=%lld, LEX_next=%lld\n", c, LEX_last, LEX_shift, LEX_next);
  
       if (b == fb)
         { for (i = 0; i < NTHREADS; i++)
@@ -334,6 +369,7 @@ static Double *lex_sort(int bytes[16], Double *src, Double *trg, Lex_Arg *parmx)
         }
       else
         { x = 0;
+          printf("******* INIT!!!!!!!!!!!!!\n");
           for (i = 0; i < NTHREADS; i++)
             { parmx[i].beg = x;
               if (LEX_zsize*(i+1) <= len) x = LEX_zsize*(i+1);
@@ -362,6 +398,8 @@ static Double *lex_sort(int bytes[16], Double *src, Double *trg, Lex_Arg *parmx)
             x += y;
           }
 
+      for (i = 0; i < NTHREADS; i++)
+        printf("*** i=%d, mem=%p, beg=%lld, n=%lld\n", i, parmx+i, (parmx+i)->beg, (parmx+i)->end-(parmx+i)->beg);
       for (i = 0; i < NTHREADS; i++)
         pthread_create(threads+i,NULL,lex_thread,parmx+i);
 
@@ -439,7 +477,7 @@ static void *tuple_thread(void *arg)
   i  = (c * tnum) >> NSHIFT;
   n  = TA_block->reads[i].boff;
   s  = ((char *) (TA_block->bases)) + n;
-  n -= Kmer*i;
+  n -= (Kmer-0)*i;
 
   if (TA_track != NULL)
     { HITS_READ *reads = TA_block->reads;
@@ -505,7 +543,7 @@ static void *tuple_thread(void *arg)
           }
         s += (p+1);
       }
-
+fprintf(stderr, "End tuple: m=%d, n=%d, x=%d, p=%d]n", m, n, x, p);
   return (NULL);
 }
 
@@ -700,7 +738,7 @@ static KmerPos *sort_kmers(HITS_DB *block, int *len)
   int       mersort[16];
 
   KmerPos  *src, *trg, *rez;
-  int       kmers, nreads;
+  int       nreads;
   int       i, j, x, z;
   uint64    h;
 
@@ -726,7 +764,7 @@ static KmerPos *sort_kmers(HITS_DB *block, int *len)
     }
 
   nreads = block->nreads;
-  kmers  = block->reads[nreads].boff - Kmer * nreads;
+  kmers  = block->reads[nreads].boff - (Kmer-0) * nreads; // -1: just a try!
 
   if (kmers <= 0)
     goto no_mers;
@@ -757,6 +795,8 @@ static KmerPos *sort_kmers(HITS_DB *block, int *len)
   if (VERBOSE) printf("\n Allocated %d of %ld (%lu bytes) at %p", (kmers+1), sizeof(KmerPos), (sizeof(KmerPos)*(kmers+1)), (void*)trg);
   if (src == NULL || trg == NULL)
     exit (1);
+  memset(src, 0, sizeof(KmerPos)*(kmers+1));
+  memset(trg, 0, sizeof(KmerPos)*(kmers+1));
 
   if (VERBOSE)
     { printf("\n   Kmer count = ");
@@ -775,6 +815,15 @@ static KmerPos *sort_kmers(HITS_DB *block, int *len)
       for (j = 0; j < BPOWR; j++)
         parmt[i].kptr[j] = 0;
     }
+        { for (i = 0; i < NTHREADS; i++) {
+            for (z = 0; z < NTHREADS*BPOWR; z++)
+              //parmx[i].sptr[z] = 0;
+              ; //assert(parmx[i].sptr[z] == 0);
+            for (j = 0; j < BPOWR; j++)
+              //parmx[i].tptr[j] = 0;
+              assert(parmx[i].tptr[j] == 0);
+          }
+        }
 
   if (BIASED)
     for (i = 0; i < NTHREADS; i++)
@@ -787,10 +836,12 @@ static KmerPos *sort_kmers(HITS_DB *block, int *len)
     pthread_join(threads[i],NULL);
 
   x = 0;
+  printf("*** nreads=%lld, NSHIFT=%d\n", nreads, NSHIFT);
   for (i = 0; i < NTHREADS; i++)
     { parmx[i].beg = x;
       j = (int) ((((int64) nreads) * (i+1)) >> NSHIFT);
       parmx[i].end = x = block->reads[j].boff - j*Kmer;
+      printf("*** j=%d, x=%lld, boff=%d, Kmer=%d, end-big=%lld\n", j, x, block->reads[j].boff, Kmer, (parmx[i].end-parmx[i].beg));
     }
 
   rez = (KmerPos *) lex_sort(mersort,(Double *) src,(Double *) trg,parmx);
@@ -892,10 +943,13 @@ no_mers:
 }
 
 void Build_Table(HITS_DB *block)
-{ if (Asort == NULL)
+{
+  printf(" block:%p\n", block);
+  if (Asort == NULL)
     Asort = sort_kmers(block,&Alen);
   else
     Csort = sort_kmers(block,&Clen);
+  printf("block:%p\n", block);
 }
 
 
@@ -1575,6 +1629,7 @@ void Match_Filter(char *aname, HITS_DB *ablock, char *bname, HITS_DB *bblock,
     goto zerowork;
 
   { int    i, j, p;
+    int z;
     uint64 c;
     int    limit;
 
@@ -1707,6 +1762,13 @@ void Match_Filter(char *aname, HITS_DB *ablock, char *bname, HITS_DB *bblock,
       parmm[i].nhits = parmm[i-1].nhits;
     parmm[0].nhits = 0;
 
+        { for (i = 0; i < NTHREADS; i++) {
+            for (z = 0; z < NTHREADS*BPOWR; z++)
+              parmx[i].sptr[z] = 0;
+            for (j = 0; j < BPOWR; j++)
+              parmx[i].tptr[j] = 0;
+          }
+        }
     for (i = 0; i < NTHREADS; i++)
       { parmm[i].kptr = parmx[i].tptr;
         for (p = 0; p < BPOWR; p++)
