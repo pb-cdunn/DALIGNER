@@ -71,6 +71,47 @@
 
 #define MIN(X,Y)  ((X) < (Y)) ? (X) : (Y)
 
+
+char * Load_Read_Data(HITS_DB *db) {
+  FILE   *bases  = (FILE *) db->bases;
+  struct stat sbuf;
+  char *data;
+
+  bases = fopen(Catenate(db->path,"","",".bps"),"r");
+  if (bases == NULL) EXIT(1);
+  stat(Catenate(db->path,"","",".bps"), &sbuf);
+  data = (char *) malloc(sbuf.st_size);
+  if (data == NULL) EXIT(1);
+  fread(data, sbuf.st_size, 1, bases);
+  fclose(bases);
+  return(data);
+}
+
+
+int Load_Read_From_RAM(HITS_DB *db, char *data, int i, char *read, int ascii) {
+  int64      off;
+  int        len, clen;
+  HITS_READ *r = db->reads;
+
+  if (i >= db->nreads) { EXIT(1); }
+
+  off = r[i].boff;
+  len = r[i].rlen;
+  clen = COMPRESSED_LEN(len);
+  if (clen > 0) { memcpy(read, data + off, clen); } //fread(read,clen,1,bases)
+  Uncompress_Read(len, read);
+  if (ascii == 1)
+    { Lower_Read(read);
+      read[-1] = '\0';
+    }
+  else if (ascii == 2)
+    { Upper_Read(read);
+      read[-1] = '\0';
+    }
+  else
+    read[-1] = 4;
+  return (0);
+}
 static bool GROUP = false;
 
 // Allows us to group overlaps between a pair of a/b reads as a unit, one per
@@ -144,12 +185,13 @@ static bool add_overlap(const Alignment *aln, const Overlap *ovl, const int coun
     return added;
 }
 
-static void print_hits(const int hit_count, HITS_DB *db2, char *bbuffer, char buffer[], int64 bsize, const int MAX_HIT_COUNT) {
+static void print_hits(const int hit_count, HITS_DB *db2, char *data, char *bbuffer, char buffer[], int64 bsize, const int MAX_HIT_COUNT) {
     int tmp_idx;
     qsort(ovlgrps, (hit_count+1), sizeof(OverlapGroup), compare_ovlgrps);
     for (tmp_idx = 0; tmp_idx < (hit_count+1) && tmp_idx < MAX_HIT_COUNT; tmp_idx++) {
         OverlapGroup *grp = &ovlgrps[tmp_idx];
-        Load_Read(db2, grp->end.bread, bbuffer, 0);
+        Load_Read_From_RAM(db2, data, grp->end.bread, bbuffer, 0); //assuming db2 == db1 is true
+        //Load_Read(db2, grp->end.bread, bbuffer, 0);
         if (COMP(grp->end.flags)) Complement_Seq(bbuffer, grp->blen );
         Upper_Read(bbuffer);
         int64 const rlen = (int64)(grp->end.path.bepos) - (int64)(grp->beg.path.bbpos);
@@ -196,6 +238,8 @@ int main(int argc, char *argv[])
   int     FALCON, OVERLAP, M4OVL;
   // XXX: MAX_HIT_COUNT should be renamed
   int     SEED_MIN, MAX_HIT_COUNT, SKIP;
+
+  char * data = NULL;
 
   //  Process options
 
@@ -275,6 +319,7 @@ int main(int argc, char *argv[])
 
     ISTWO  = 0;
     status = Open_DB(argv[1],db1);
+    if (FALCON) data = Load_Read_Data(db1);
     if (status < 0)
       exit (1);
     if (db1->part > 0)
@@ -306,6 +351,7 @@ int main(int argc, char *argv[])
       db2 = db1;
     Trim_DB(db1);
   }
+
 
   //  Process read index arguments into a sorted list of read ranges
 
@@ -697,16 +743,18 @@ int main(int argc, char *argv[])
         if (FALCON)
           {
             if (p_aread == -1) {
-                Load_Read(db1, ovl->aread, abuffer, 2);
+                Load_Read_From_RAM(db1, data, ovl->aread, abuffer, 2);
+                //Load_Read(db1, ovl->aread, abuffer, 2);
                 printf("%08d %s\n", ovl->aread, abuffer);
                 p_aread = ovl->aread;
                 skip_rest = 0;
             }
             if (p_aread != ovl -> aread ) {
-                print_hits(hit_count, db2, bbuffer, buffer, (int64)sizeof(buffer), MAX_HIT_COUNT);
+                print_hits(hit_count, db2, data, bbuffer, buffer, (int64)sizeof(buffer), MAX_HIT_COUNT);
                 hit_count = -1;
 
-                Load_Read(db1, ovl->aread, abuffer, 2);
+                Load_Read_From_RAM(db1, data, ovl->aread, abuffer, 2);
+                //Load_Read(db1, ovl->aread, abuffer, 2);
                 printf("%08d %s\n", ovl->aread, abuffer);
                 p_aread = ovl->aread;
                 skip_rest = 0;
@@ -828,7 +876,7 @@ int main(int argc, char *argv[])
 
     if (FALCON && hit_count != -1)
       {
-        print_hits(hit_count, db2, bbuffer, buffer, (int64)sizeof(buffer), MAX_HIT_COUNT);
+        print_hits(hit_count, db2, data, bbuffer, buffer, (int64)sizeof(buffer), MAX_HIT_COUNT);
         printf("- -\n");
         free(ovlgrps);
       }
@@ -845,6 +893,6 @@ int main(int argc, char *argv[])
   Close_DB(db1);
   if (ISTWO)
     Close_DB(db2);
-
+  if(data != NULL) free(data);
   exit (0);
 }
