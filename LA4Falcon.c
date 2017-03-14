@@ -1,3 +1,4 @@
+/* vim: set et ts=2 sts=2 sw=2 : */
 /************************************************************************************\
 *                                                                                    *
 * Copyright (c) 2014, Dr. Eugene W. Myers (EWM). All rights reserved.                *
@@ -298,12 +299,16 @@ int main(int argc, char *argv[])
             Trim_DB(db2);
           }
         else
-          db2 = db1;
+            { dbx2 = dbx1;
+              db2 = db1;
+            }
         free(root);
         free(pwd);
       }
     else
-      db2 = db1;
+      { dbx2 = dbx1;
+        db2 = db1;
+      }
     Trim_DB(db1);
   }
 
@@ -842,8 +847,8 @@ int main(int argc, char *argv[])
       }
   }
 
-  Close_DB(db1);
+  Close_DBX(dbx1);
   if (ISTWO)
-    Close_DB(db2);
+    Close_DBX(dbx2);
   exit (0);
 }
