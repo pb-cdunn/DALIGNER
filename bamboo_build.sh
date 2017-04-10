@@ -17,7 +17,7 @@ cp prebuilt/DAZZ_DB/include/*.h DAZZ_DB/
 
 make -C DALIGNER clean
 make -C DALIGNER LIBDIRS=$PWD/prebuilt/DAZZ_DB/lib -j
-make -C DALIGNER PREFIX=$PWD/build
+make -C DALIGNER PREFIX=$PWD/build install
 
 make -f /dept/secondary/siv/testdata/hgap/synth5k/LA4Falcon/makefile clean
 PATH=.:${PATH} make -C DALIGNER -f /dept/secondary/siv/testdata/hgap/synth5k/LA4Falcon/makefile
