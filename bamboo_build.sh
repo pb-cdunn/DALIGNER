@@ -13,6 +13,7 @@ mkdir -p prebuilt/DAZZ_DB build/bin
 curl -s -L $NEXUS_URL/DAZZ_DB-SNAPSHOT.tgz|tar zxf - -C prebuilt/DAZZ_DB
 mkdir -p DAZZ_DB
 cp prebuilt/DAZZ_DB/lib/*.a DAZZ_DB/
+cp prebuilt/DAZZ_DB/include/*.h DAZZ_DB/
 
 make -C DALIGNER clean
 make -C DALIGNER LIBDIRS=$PWD/prebuilt/DAZZ_DB/lib -j
