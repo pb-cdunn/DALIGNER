@@ -464,8 +464,8 @@ static void *tuple_thread(void *arg)
       kptr[BMASK] += (data->fill = m-n);
       while (n < m)
         { list[n].code = 0xffffffffffffffffllu;
-          list[n].read = 0xffffffff;
-          list[n].rpos = 0xffffffff;
+          list[n].read = -1;
+          list[n].rpos = -1;
           n += 1;
         }
     }
@@ -606,8 +606,8 @@ static void *biased_tuple_thread(void *arg)
   kptr[BMASK] += (data->fill = m-n);
   while (n < m)
     { list[n].code = 0xffffffffffffffffllu;
-      list[n].read = 0xffffffff;
-      list[n].rpos = 0xffffffff;
+      list[n].read = -1;
+      list[n].rpos = -1;
       n += 1;
     }
 
@@ -777,8 +777,34 @@ void *Sort_Kmers(HITS_DB *block, int *len)
 
   rez = (KmerPos *) lex_sort(mersort,(Double *) src,(Double *) trg,parmx);
   if (BIASED || TA_track != NULL)
-    for (i = 0; i < NTHREADS; i++)
-      kmers -= parmt[i].fill;
+    { if (Kmer%4 == 0)
+        { int wedge[NTHREADS];
+
+          for (j = 0; j < NTHREADS; j++)
+            if (parmt[j].fill > 0)
+              break;
+          j += 1;
+          if (j < NTHREADS)
+            { x = kmers-1;
+              for (i = NTHREADS-1; i >= j; i--)
+                { x = x - parmt[i].fill;
+                  z = x;
+                  while (rez[x].read >= 0)
+                    x -= 1;
+                  wedge[i] = z-x;
+                }
+              x += 1;
+              z = x-parmt[j-1].fill;
+              for (i = j; i < NTHREADS; i++)
+                { memmove(rez+z,rez+x,wedge[i]*sizeof(KmerPos));
+                  x += wedge[i] + parmt[i].fill;
+                  z += wedge[i];
+                }
+            }
+        }
+      for (i = 0; i < NTHREADS; i++)
+        kmers -= parmt[i].fill;
+    }
 
   if (TooFrequent < INT32_MAX && kmers > 0)
     { parmf[0].beg = 0;
@@ -840,7 +866,7 @@ void *Sort_Kmers(HITS_DB *block, int *len)
     printf("\nKMER SORT:\n");
     for (i = 0; i < HOW_MANY && i < kmers; i++)
       { KmerPos *c = rez+i;
-        printf(" %5d / %5d / %10lld\n",c->read,c->rpos,c->code);
+        printf(" %9d:  %6d / %6d / %16llx\n",i,c->read,c->rpos,c->code);
       }
     fflush(stdout);
   }
