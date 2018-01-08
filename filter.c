@@ -399,9 +399,9 @@ static int *NormShift = NULL;
 static int  LogNorm, LogThresh;
 static int  LogBase[4];
 
-static HITS_DB    *TA_block;
+static DAZZ_DB    *TA_block;
 static KmerPos    *TA_list;
-static HITS_TRACK *TA_track;
+static DAZZ_TRACK *TA_track;
 
 typedef struct
   { int    tnum;
@@ -426,7 +426,7 @@ static void *tuple_thread(void *arg)
   n -= Kmer*i;
 
   if (TA_track != NULL)
-    { HITS_READ *reads = TA_block->reads;
+    { DAZZ_READ *reads = TA_block->reads;
       int64     *anno1 = ((int64 *) (TA_track->anno)) + 1;
       int       *point = (int *) (TA_track->data);
       int64      a, b, f; 
@@ -509,7 +509,7 @@ static void *biased_tuple_thread(void *arg)
   n -= Kmer*i;
 
   if (TA_track != NULL)
-    { HITS_READ *reads = TA_block->reads;
+    { DAZZ_READ *reads = TA_block->reads;
       int64     *anno1 = ((int64 *) (TA_track->anno)) + 1;
       int       *point = (int *) (TA_track->data);
       int64      j, b, f; 
@@ -674,7 +674,7 @@ static void *compress_thread(void *arg)
   return (NULL);
 }
 
-void *Sort_Kmers(HITS_DB *block, int *len)
+void *Sort_Kmers(DAZZ_DB *block, int *len)
 { THREAD    threads[NTHREADS];
   Tuple_Arg parmt[NTHREADS];
   Comp_Arg  parmf[NTHREADS];
@@ -1232,8 +1232,8 @@ static void *merge_thread(void *arg)
 
   //  Report threads: given a segment of merged list, find all seeds and from them all alignments.
 
-static HITS_DB    *MR_ablock;
-static HITS_DB    *MR_bblock;
+static DAZZ_DB    *MR_ablock;
+static DAZZ_DB    *MR_bblock;
 static SeedPair   *MR_hits;
 static int         MR_two;
 static Align_Spec *MR_spec;
@@ -1601,8 +1601,8 @@ static void *report_thread(void *arg)
   Double      *hitd   = (Double *) MR_hits;
   char        *aseq   = (char *) (MR_ablock->bases);
   char        *bseq   = (char *) (MR_bblock->bases);
-  HITS_READ   *aread  = MR_ablock->reads;
-  HITS_READ   *bread  = MR_bblock->reads;
+  DAZZ_READ   *aread  = MR_ablock->reads;
+  DAZZ_READ   *bread  = MR_bblock->reads;
   int         *score  = data->score;
   int         *scorp  = data->score + 1;
   int         *scorm  = data->score - 1;
@@ -1986,7 +1986,7 @@ static char *NameBuffer(char *aname, char *bname)
   return (cat);
 }
 
-void Match_Filter(char *aname, HITS_DB *ablock, char *bname, HITS_DB *bblock,
+void Match_Filter(char *aname, DAZZ_DB *ablock, char *bname, DAZZ_DB *bblock,
                   void *vasort, int alen, void *vbsort, int blen,
                   int comp, Align_Spec *aspec)
 { THREAD     threads[NTHREADS];
