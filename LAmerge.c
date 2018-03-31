@@ -48,24 +48,6 @@ static char *Usage = "[-va] <merge:las> <parts:las> ...";
   else						\
     bigger = 0;
 
-static void Fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
-  size_t rc = fwrite(ptr, size, nmemb, stream);
-  if (rc != nmemb) {
-    EPRINTF(EPLACE,"  Error writing %zu elements (of size %zu)\n", nmemb, size);
-    exit(1);
-  }
-}
-
-static void Fclose(FILE *stream) {
-  // An error in fclose() could be caused by an earlier failure in fwrite().
-  // 'man fclose' for details.
-  int rc = fclose(stream);
-  if (rc != 0) {
-    EPRINTF(EPLACE,"  Error closing stream.\n");
-    exit(1);
-  }
-}
-
 static void reheap(int s, Overlap **heap, int hsize)
 { int      c, l, r;
   int      bigger;
@@ -186,7 +168,7 @@ static void ovl_reload(IO_block *in, int64 bsize)
 
   remains = in->top - in->ptr;
   if (remains > 0)
-    memmove(in->block, in->ptr, remains);
+    memcpy(in->block, in->ptr, remains);
   in->ptr  = in->block;
   in->top  = in->block + remains;
   in->top += fread(in->top,1,bsize-remains,in->stream);
@@ -266,13 +248,12 @@ int main(int argc, char *argv[])
       input = Fopen(Catenate(pwd,"/",root,".las"),"r");
       if (input == NULL)
         exit (1);
+      free(pwd);
+      free(root);
 
       if (fread(&novl,sizeof(int64),1,input) != 1)
         SYSTEM_ERROR
       totl += novl;
-      if (VERBOSE) fprintf(stdout, "In file %s, there are %lld records\n", Catenate(pwd,"/",root,".las"), novl);
-      free(pwd);
-      free(root);
       if (fread(&mspace,sizeof(int),1,input) != 1)
         SYSTEM_ERROR
       if (i == 0)
@@ -306,8 +287,8 @@ int main(int argc, char *argv[])
     free(pwd);
     free(root);
 
-    Fwrite(&totl,sizeof(int64),1,output);
-    Fwrite(&tspace,sizeof(int),1,output);
+    fwrite(&totl,sizeof(int64),1,output);
+    fwrite(&tspace,sizeof(int),1,output);
 
     oblock = block+fway*bsize;
     optr   = oblock;
@@ -369,7 +350,7 @@ int main(int argc, char *argv[])
           if (src->ptr + span > src->top)
             ovl_reload(src,bsize);
           if (optr + span > otop)
-            { Fwrite(oblock,1,optr-oblock,output);
+            { fwrite(oblock,1,optr-oblock,output);
               optr = oblock;
             }
 
@@ -393,8 +374,8 @@ int main(int argc, char *argv[])
   //  Flush output buffer and wind up
 
   if (optr > oblock)
-    Fwrite(oblock,1,optr-oblock,output);
-  Fclose(output);
+    fwrite(oblock,1,optr-oblock,output);
+  fclose(output);
 
   for (i = 0; i < fway; i++)
     fclose(in[i].stream);
