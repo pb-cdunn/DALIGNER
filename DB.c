@@ -99,10 +99,16 @@ char *Strdup(char *name, char *mesg)
 
 FILE *Fopen(char *name, char *mode)
 { FILE *f;
+  char newmode[3];
 
   if (name == NULL || mode == NULL)
     return (NULL);
-  if ((f = fopen(name,mode)) == NULL)
+  if (strcmp(mode, "r") == 0) {
+      strcpy(newmode,"rm");
+  } else {
+      strcpy(newmode,mode);
+  }
+  if ((f = fopen(name,newmode)) == NULL)
     EPRINTF(EPLACE,"%s: Cannot open %s for '%s'\n",Prog_Name,name,mode);
   return (f);
 }
@@ -1603,7 +1609,7 @@ int Load_Read(DAZZ_DB *db, int i, char *read, int ascii)
   DAZZ_READ *r = db->reads;
 
   if (i >= db->nreads)
-    { EPRINTF(EPLACE,"%s: Index out of bounds (Load_Read)\n",Prog_Name);
+    { EPRINTF(EPLACE,"%s: Index %d out of bounds %d (Load_Read)\n",Prog_Name,i,db->nreads);
       EXIT(1);
     }
   if (bases == NULL)
@@ -1698,7 +1704,7 @@ char *Load_Subread(DAZZ_DB *db, int i, int beg, int end, char *read, int ascii)
   DAZZ_READ *r = db->reads;
 
   if (i >= db->nreads)
-    { EPRINTF(EPLACE,"%s: Index out of bounds (Load_Read)\n",Prog_Name);
+    { EPRINTF(EPLACE,"%s: Subread Index %d out of bounds %d (Load_Read)\n",Prog_Name,i,db->nreads);
       EXIT(NULL);
     }
   if (bases == NULL)
