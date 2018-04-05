@@ -12,10 +12,10 @@ class DAZZ_READ(Structure):
                  ("flags", c_int)]
 
 
-class HITS_TRACK(Structure):
+class DAZZ_TRACK(Structure):
     pass
 
-HITS_TRACK._fields_ = [ ("_track", POINTER(HITS_TRACK)),
+DAZZ_TRACK._fields_ = [ ("_track", POINTER(DAZZ_TRACK)),
                         ("name", c_char_p),
                         ("size", c_int),
                         ("anno", c_void_p),
@@ -39,7 +39,7 @@ class DAZZ_DB(Structure):
                  ( "loaded", c_int),
                  ( "bases", c_void_p),
                  ( "reads", POINTER(DAZZ_READ)),
-                 ( "tracks", POINTER(HITS_TRACK)) ]
+                 ( "tracks", POINTER(DAZZ_TRACK)) ]
 
 
 DB = CDLL("./DB.so")
