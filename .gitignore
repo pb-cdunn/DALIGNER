@@ -22,3 +22,6 @@
 *.o
 *.d
 *.swp
+
+# meson
+subprojects/dazz_db
