@@ -44,11 +44,22 @@ daligner_deps = [daligner_m_dep, daligner_thread_dep, daligner_dazzdb_dep]
 # binaries #
 ############
 
-daligner_align_impl = static_library(
-  'align convenience library',
+# install library if
+# - either running as a proper project
+# - or using shared libraries
+daligner_lib_install = (not meson.is_subproject()) or (get_option('default_library') == 'shared')
+
+daligner_lib = library(
+  'daligner',
   files([
     'align.c']),
-  install : false,
+  # use boost SONAME practice:
+  #   cause ld startup issues before
+  #   you even have the chance of running
+  #   into ABI issues.
+  soversion : meson.project_version(),
+  version : meson.project_version(),
+  install : daligner_lib_install,
   dependencies : daligner_deps,
   c_args : daligner_flags)
 
@@ -73,7 +84,31 @@ foreach i : daligner_exes
     i[0],
     files([i[0] + '.c']) + i[1],
     dependencies : daligner_deps,
-    install : true,
+    install : (not meson.is_subproject()),
     c_args : daligner_flags,
-    link_with : daligner_align_impl)
+    link_with : daligner_lib)
 endforeach
+
+###################
+# dependency info #
+###################
+
+if not meson.is_subproject()
+  import('pkgconfig').generate(
+    libraries : daligner_lib,
+    version : meson.project_version(),
+    name : 'daligner',
+    filebase : 'daligner',
+    subdirs : 'daligner',
+    description : 'Daligner library')
+
+  install_headers(
+    files([
+      'align.h']),
+    subdir : 'daligner')
+endif
+
+daligner_dep = declare_dependency(
+  include_directories : include_directories('.'),
+  link_with : daligner_lib,
+  version : meson.project_version())
