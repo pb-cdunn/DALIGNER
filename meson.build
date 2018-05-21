@@ -44,11 +44,22 @@ daligner_deps = [daligner_m_dep, daligner_thread_dep, daligner_dazzdb_dep]
 # binaries #
 ############
 
-daligner_lib = static_library(
+# install library if
+# - either running as a proper project
+# - or using shared libraries
+daligner_lib_install = (not meson.is_subproject()) or (get_option('default_library') == 'shared')
+
+daligner_lib = library(
   'daligner',
   files([
     'align.c']),
-  install : (not meson.is_subproject()),
+  # use boost SONAME practice:
+  #   cause ld startup issues before
+  #   you even have the chance of running
+  #   into ABI issues.
+  soversion : meson.project_version(),
+  version : meson.project_version(),
+  install : daligner_lib_install,
   dependencies : daligner_deps,
   c_args : daligner_flags)
 
