@@ -25,3 +25,6 @@
 
 # meson
 subprojects/dazz_db
+
+/DESTDIR/
+/build/

@@ -1,33 +1,50 @@
 #!/bin/bash -e
 type module >& /dev/null || source /mnt/software/Modules/current/init/bash
 
-module load gcc/6.4.0
-module load git/2.8.3
+module load gcc
+module load git
+module load meson
+module load ninja
 module load ccache
 
 set -vex
 
-NEXUS_BASEURL=http://ossnexus.pacificbiosciences.com/repository
-NEXUS_URL=$NEXUS_BASEURL/unsupported/gcc-6.4.0
+export CCACHE_COMPILERCHECK='%compiler% -dumpversion'
 
-rm -rf prebuilt build
-mkdir -p prebuilt/DAZZ_DB build/bin
-curl -s -L $NEXUS_URL/DAZZ_DB-SNAPSHOT.tgz|tar zxf - -C prebuilt/DAZZ_DB
-mkdir -p DAZZ_DB
-cp prebuilt/DAZZ_DB/lib/lib* DAZZ_DB/
-cp prebuilt/DAZZ_DB/include/dazzdb/*.h DAZZ_DB/
+case "${bamboo_planRepository_branchName}" in
+  develop|master)
+    module load dazzdb/${bamboo_planRepository_branchName}
+    export PREFIX_ARG="/mnt/software/d/dazzdb/${bamboo_planRepository_branchName}"
+    export BUILD_NUMBER="${bamboo_globalBuildNumber:-0}"
+    ;;
+  *)
+    module load dazzdb/develop
+    export PREFIX_ARG=/PREFIX
+    export BUILD_NUMBER="0"
+    ;;
+esac
 
-make clean
-make LIBDIRS=$PWD/prebuilt/DAZZ_DB/lib -j
-make PREFIX=$PWD/build install
+# rm -rf ./build
+meson --buildtype=release --strip --libdir=lib --prefix="${PREFIX_ARG}" -Dtests=false --wrap-mode nofallback ./build .
+
+TERM='dumb' ninja -C ./build -v
+
+DESTDIR="$(pwd)/DESTDIR"
+rm -rf "${DESTDIR}"
+TERM='dumb' DESTDIR="${DESTDIR}" ninja -C ./build -v install
 
 make -f /dept/secondary/siv/testdata/hgap/synth5k/LA4Falcon/makefile clean
-PATH=.:${PATH} make -f /dept/secondary/siv/testdata/hgap/synth5k/LA4Falcon/makefile
+PATH="${DESTDIR}${PREFIX_ARG}/bin":${PATH} LD_LIBRARY_PATH="${DESTDIR}${PREFIX_ARG}/lib":${LD_LIBRARY_PATH} make -f /dept/secondary/siv/testdata/hgap/synth5k/LA4Falcon/makefile
 make -f /dept/secondary/siv/testdata/hgap/synth5k/LA4Falcon/makefile clean
 
-cd build
-tar vzcf DALIGNER-SNAPSHOT.tgz bin
+rm -rf "${DESTDIR}"
 
-if [[ $bamboo_planRepository_branchName == "develop" ]]; then
-  curl -v -n --upload-file DALIGNER-SNAPSHOT.tgz $NEXUS_URL/DALIGNER-SNAPSHOT.tgz
-fi
+case "${bamboo_planRepository_branchName}" in
+  develop|master)
+    DESTDIR=
+    TERM='dumb' DESTDIR="${DESTDIR}" ninja -C ./build -v install
+    chmod -R a+rwx "${DESTDIR}${PREFIX_ARG}"/*
+    module load daligner/${bamboo_planRepository_branchName}
+    ldd -r $(which DBshow)
+    ;;
+esac
