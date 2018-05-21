@@ -14,7 +14,7 @@ export CCACHE_COMPILERCHECK='%compiler% -dumpversion'
 case "${bamboo_planRepository_branchName}" in
   develop|master)
     module load dazzdb/${bamboo_planRepository_branchName}
-    export PREFIX_ARG="/mnt/software/d/dazzdb/${bamboo_planRepository_branchName}"
+    export PREFIX_ARG="/mnt/software/d/daligner/${bamboo_planRepository_branchName}"
     export BUILD_NUMBER="${bamboo_globalBuildNumber:-0}"
     ;;
   *)
