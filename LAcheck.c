@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 
         parse = Parse_Block_Arg(argv[i]);
 
-        while ((input = Next_Block_Arg(parse)) != NULL)
+        while ((input = Next_Block_Arg(argv[i])) != NULL)
           { disp = Block_Arg_Root(parse);
 
             if (fread(&novl,sizeof(int64),1,input) != 1)
